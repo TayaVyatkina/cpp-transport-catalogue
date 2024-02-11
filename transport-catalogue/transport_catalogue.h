@@ -1,10 +1,10 @@
 #pragma once
 
 #include <deque>
+#include <optional>
 #include <set>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <vector>
 #include <unordered_map>
 
@@ -19,22 +19,26 @@ struct Stop {
 
 struct Bus {
 	std::string name;
-	std::vector<Stop*> stops{};
+	std::vector<const Stop*> stops{};
 };
-
+struct BusInfo {
+	size_t stops_on_route = 0;
+	size_t unique_stops = 0;
+	double route_length = .0;
+};
 class TransportCatalogue {
 public:
-	void AddStop(const Stop& new_stop);
+	void AddStop(Stop new_stop);
 
-	Stop* FindStop(const std::string_view name) const;
+	const Stop* FindStop(const std::string_view name) const;
 
-	void AddBus(const Bus& new_bus);
+	void AddBus(Bus new_bus);
 
-	Bus* FindBus(const std::string_view name) const;
+	const Bus* FindBus(const std::string_view name) const;
 
-	std::tuple<size_t, size_t, double> GetBusInfo(const std::string_view name) const;
+	std::optional<BusInfo> GetBusInfo(std::string_view name) const;
 
-	std::set<std::string_view> GetStopInfo(const std::string_view name) const;
+	std::set<std::string_view> GetStopInfo(std::string_view name) const;
 
 private:
 	std::deque<Stop> stops_;

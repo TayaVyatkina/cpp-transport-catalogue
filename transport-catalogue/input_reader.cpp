@@ -107,23 +107,23 @@ void InputReader::ParseLine(std::string_view line) {
     }
 }
 
-void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) const {
+void InputReader::ApplyCommands(TransportCatalogue& catalogue) const {
     using namespace detail;
     std::vector<input::CommandDescription> commands_buses;
     for (const auto& obj : commands_) {
         if (obj.command == "Stop") {
             Coordinates coordinates = ParseCoordinates(Trim(obj.description));
-            catalogue.AddStop(std::move(Stop{ static_cast<std::string>(Trim(obj.id)), coordinates }));
+            catalogue.AddStop(Stop{ std::string(Trim(obj.id)), coordinates });
         }
         else {
-            commands_buses.push_back(std::move(obj));
+            commands_buses.push_back(obj);
         }
     }
     for (const auto& obj : commands_buses) {
         if (obj.command == "Bus") {
-            std::vector<Stop*> stops_str;
+            std::vector<const Stop*> stops_str;
             for (const auto& stop : ParseRoute(Trim(obj.description))) {
-                stops_str.push_back(std::move(catalogue.FindStop(stop)));
+                stops_str.push_back(catalogue.FindStop(stop));
             }
             catalogue.AddBus(std::move(Bus{ static_cast<std::string>(Trim(obj.id)), stops_str }));
         }

@@ -42,13 +42,15 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
     std::ostream& output) {
     using namespace std::literals;
     using namespace output;
-    CommandDescription new_request = std::move(detail::ParseCommandDescription(detail::Trim(request)));
+    CommandDescription new_request = detail::ParseCommandDescription(detail::Trim(request));
     if (new_request.command == "Bus" && tansport_catalogue.FindBus(new_request.id)) {
-        std::tuple<size_t, size_t, float> bus_info = std::move(tansport_catalogue.GetBusInfo(new_request.id));
+        std::optional<BusInfo> bus_info = tansport_catalogue.GetBusInfo(new_request.id).has_value() ?
+            tansport_catalogue.GetBusInfo(new_request.id).value()
+            : BusInfo{};
         output << request << ": "s
-            << std::get<0>(bus_info) << " stops on route, "s
-            << std::get<1>(bus_info) << " unique stops, "s
-            << std::setprecision(6) << std::get<2>(bus_info) << " route length\n"s;
+            << bus_info.value().stops_on_route << " stops on route, "s
+            << bus_info.value().unique_stops << " unique stops, "s
+            << std::setprecision(6) << bus_info.value().route_length << " route length\n"s;
     }
     else if (new_request.command == "Stop" && tansport_catalogue.FindStop(new_request.id)) {
         std::set<std::string_view> stop_info = std::move(tansport_catalogue.GetStopInfo(new_request.id));
