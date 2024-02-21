@@ -6,6 +6,22 @@
 
 namespace transport_catalogue {
 
+void TransportCatalogue::AddDistanceBetweenStops(const std::string_view stop1, const std::string_view stop2, size_t dist) {
+	distance_between_stops_.insert({ std::pair{ FindStop(stop1), FindStop(stop2) }, dist });
+}
+
+size_t TransportCatalogue::GetDistanceBetweenStops(const Stop* stop1, const Stop* stop2) const {
+	std::pair<const Stop*, const Stop*> stops{ stop1, stop2 };
+	if (distance_between_stops_.count(stops)) {
+		return distance_between_stops_.at(stops);
+	}
+	else if (distance_between_stops_.count(std::pair{stop2, stop1})) {
+		return distance_between_stops_.at(std::pair{ stop2, stop1 });
+	}
+	return 0;
+
+}
+
 void TransportCatalogue::AddStop(Stop new_stop) {
 	stops_.emplace_back(std::move(new_stop));
 	stopname_to_bus_[stops_.back().name] = &stops_.back();
@@ -36,13 +52,22 @@ std::optional<BusInfo> TransportCatalogue::GetBusInfo(std::string_view name) con
 		Bus bus = *busname_to_stop_.at(name);
 		size_t stops_on_route = bus.stops.size();
 		size_t unique_stops = std::set(bus.stops.begin(), bus.stops.end()).size();
+		
+		// географическое расстояние
 		double route_length = .0;
 		Coordinates last_stop = bus.stops[0]->coordinates;
 		for (const auto& i : bus.stops) {
-			route_length += ComputeDistance(last_stop, FindStop(i->name)->coordinates);
+			route_length += ComputeGeographicalDistance(last_stop, FindStop(i->name)->coordinates);
 			last_stop = FindStop(i->name)->coordinates;
 		}
-		return BusInfo{stops_on_route, unique_stops, route_length};
+		// фактическое расстояние
+		double actual_length = 0.;
+		auto last = bus.stops[0];
+		for (const auto& i : bus.stops) {
+			actual_length += GetDistanceBetweenStops(last, i);
+			last = i;
+		}
+		return BusInfo{stops_on_route, unique_stops, actual_length, (actual_length * 1.) / route_length};
 	}
 	return {};
 }

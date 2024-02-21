@@ -28,8 +28,30 @@ Coordinates ParseCoordinates(std::string_view str) {
     return { lat, lng };
 }
 
+std::vector<std::pair<std::string, size_t>> ParseDistances(std::string_view str) {
+    auto comma = str.find(',');
+    comma = str.find(',', comma + 1);
+    std::vector<std::pair<std::string, size_t>> distances_to_other_stops;
+    while (comma != str.npos) {       
+        auto dist_begin = str.find_first_not_of(' ', comma + 1);
+        auto m = str.find_first_of('m', dist_begin);
+        auto to = str.find_first_of("to", m + 1);
+        auto neighbor_stop_begin = str.find_first_not_of(' ', to + 2);
+        comma = str.find(',', comma + 1);
+        if (comma != str.npos) {
+            distances_to_other_stops.push_back({ std::string(str.substr(neighbor_stop_begin, comma - neighbor_stop_begin)), std::stoi(std::string(str.substr(dist_begin, m - 1))) });
+        }
+        else {
+            distances_to_other_stops.push_back({ std::string(str.substr(neighbor_stop_begin)), std::stoi(std::string(str.substr(dist_begin, m - 1))) });
+        }
+    }
+
+    return distances_to_other_stops;
+}
+
 /**
 * Удаляет пробелы в начале и конце строки
+* 
 */
 std::string_view Trim(std::string_view string) {
     const auto start = string.find_first_not_of(' ');
@@ -112,7 +134,7 @@ void InputReader::ApplyCommands(TransportCatalogue& catalogue) const {
     std::vector<input::CommandDescription> commands_buses;
     for (const auto& obj : commands_) {
         if (obj.command == "Stop") {
-            Coordinates coordinates = ParseCoordinates(Trim(obj.description));
+            Coordinates coordinates = ParseCoordinates(Trim(obj.description));           
             catalogue.AddStop(Stop{ std::string(Trim(obj.id)), coordinates });
         }
         else {
@@ -126,6 +148,14 @@ void InputReader::ApplyCommands(TransportCatalogue& catalogue) const {
                 stops_str.push_back(catalogue.FindStop(stop));
             }
             catalogue.AddBus(std::move(Bus{ static_cast<std::string>(Trim(obj.id)), stops_str }));
+        }
+    }
+    for (const auto& obj : commands_) {
+        if (obj.command == "Stop") {
+            std::vector< std::pair<std::string, size_t> > distances_to_other_stops = ParseDistances(Trim(obj.description));
+            for (const auto& i : distances_to_other_stops) {
+                catalogue.AddDistanceBetweenStops(obj.id, i.first, i.second);
+            }
         }
     }
 }
