@@ -1,32 +1,29 @@
-﻿#include <iostream>
+#include <iostream>
 #include <string>
+#include <fstream>
 
-#include "input_reader.h"
-#include "stat_reader.h"
+#include "json_reader.h"
+#include "map_renderer.h"
+#include "request_handler.h"
+
 
 using namespace std;
 using namespace transport_catalogue;
+
+
 int main() {
     TransportCatalogue catalogue;
+/*json_reader_(cin);// прочитали базу + запросы к базе + настройки карты
+json_reader_.ConstructBase(catalogue); // сформировали бд
+renderer::MapRenderer map_rend(json_reader_.LoadMapSettings(), json_reader_.GetRoutes(catalogue));// подгрузили из json настройки для карты + список остановок 
+request_handler::RequestHandler request_handler(catalogue, map_rend); // агрегация бд и "чертёжника"
+request_handler.AddRoutes(json_reader_.GetRoutes(catalogue));//  подгрузили список маршрутов
+request_handler.RenderMap(cout);*/
+    json_reader::JsonReader json_reader_(cin);// прочитали базу + запросы к базе + настройки карты
+json_reader_.ConstructBase(catalogue); // сформировали бд
 
-    int base_request_count;
-    cin >> base_request_count >> ws;
 
-    {
-        InputReader reader;
-        for (int i = 0; i < base_request_count; ++i) {
-            string line;
-            getline(cin, line);
-            reader.ParseLine(line);
-        }
-        reader.ApplyCommands(catalogue);
-    }
 
-    int stat_request_count;
-    cin >> stat_request_count >> ws;
-    for (int i = 0; i < stat_request_count; ++i) {
-        string line;
-        getline(cin, line);
-        ParseAndPrintStat(catalogue, line, cout);
-    }
+json_reader_.AskBase(catalogue, cout);
+
 }

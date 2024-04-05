@@ -3,6 +3,7 @@
 #include <tuple>
 
 #include "transport_catalogue.h"
+using namespace geo;
 
 namespace transport_catalogue {
 
@@ -47,27 +48,23 @@ const Bus* TransportCatalogue::FindBus(const std::string_view name) const {
 }
 
 std::optional<BusInfo> TransportCatalogue::GetBusInfo(std::string_view name) const {
-
-	if (busname_to_stop_.count(name)) {
+	
+	if (busname_to_stop_.count(name) && !(*busname_to_stop_.at(name)).stops.empty()) {
 		Bus bus = *busname_to_stop_.at(name);
 		size_t stops_on_route = bus.stops.size();
 		size_t unique_stops = std::set(bus.stops.begin(), bus.stops.end()).size();
 		
-		// географическое расстояние
-		double route_length = .0;
-		Coordinates last_stop = bus.stops[0]->coordinates;
-		for (const auto& i : bus.stops) {
-			route_length += ComputeGeographicalDistance(last_stop, FindStop(i->name)->coordinates);
-			last_stop = FindStop(i->name)->coordinates;
+		double route_length = .0;// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		double actual_length = .0;// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+
+		for (size_t i = 0; i + 1 != bus.stops.size(); ++i) {
+			const Stop* current_stop = bus.stops[i];
+			const Stop* next_stop = bus.stops[i + 1];
+			route_length += ComputeGeographicalDistance(current_stop->coordinates, next_stop->coordinates);
+			actual_length += GetDistanceBetweenStops(current_stop, next_stop);
 		}
-		// фактическое расстояние
-		double actual_length = 0.;
-		auto last = bus.stops[0];
-		for (const auto& i : bus.stops) {
-			actual_length += GetDistanceBetweenStops(last, i);
-			last = i;
-		}
-		return BusInfo{stops_on_route, unique_stops, actual_length, (actual_length * 1.) / route_length};
+		return BusInfo{ stops_on_route, unique_stops, actual_length, (actual_length * 1.) / route_length };
+		
 	}
 	return {};
 }
