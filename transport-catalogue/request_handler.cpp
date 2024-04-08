@@ -40,15 +40,15 @@ void RequestHandler::RenderMap(std::ostream& out) const {
     // �������� + �������� ���������
     for (const auto& [bus, is_roundtrip] : buses_) {
         if (GetBusStat(bus.name).value().stops_on_route > 0) { 
-            doc.Add(map_renderer_.RenderRouteUnderlayer(bus.stops.front(), bus.name));
-            doc.Add(map_renderer_.RenderRouteName(bus.stops.front(), bus.name));     
+            doc.Add(map_renderer_.RenderRouteUnderlayer(*bus.stops.front(), bus.name));
+            doc.Add(map_renderer_.RenderRouteName(*bus.stops.front(), bus.name));     
             // �������������� ��������� ��� ������������ ��������
             // ���� �� ��� ����� ��������� ������ ���������
             size_t last_stop_pos = GetBusStat(bus.name).value().stops_on_route / 2;
             if (is_roundtrip == false && bus.stops.front() != bus.stops[last_stop_pos]) {
                 map_renderer_.SetCounter(map_renderer_.GetCounter() - 1);
-                doc.Add(map_renderer_.RenderRouteUnderlayer(bus.stops[last_stop_pos], bus.name));
-                doc.Add(map_renderer_.RenderRouteName(bus.stops[last_stop_pos], bus.name));
+                doc.Add(map_renderer_.RenderRouteUnderlayer(*bus.stops[last_stop_pos], bus.name));
+                doc.Add(map_renderer_.RenderRouteName(*bus.stops[last_stop_pos], bus.name));
             }
         }
     }
@@ -65,15 +65,15 @@ void RequestHandler::RenderMap(std::ostream& out) const {
         });
     for (const auto& stop : stops) {
         if (!GetBusesByStop(stop->name).empty()) {
-            doc.Add(map_renderer_.RenderStopCircle(stop));
+            doc.Add(map_renderer_.RenderStopCircle(*stop));
         }
     }
 
     // �������� + �������� ���������
     for (const auto& stop : stops) {
         if (!GetBusesByStop(stop->name).empty()) {
-            doc.Add(map_renderer_.RenderStopUnderlayer(stop));
-            doc.Add(map_renderer_.RenderStopName(stop));
+            doc.Add(map_renderer_.RenderStopUnderlayer(*stop));
+            doc.Add(map_renderer_.RenderStopName(*stop));
         }
     }
     doc.Render(out);

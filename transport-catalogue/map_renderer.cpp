@@ -1,6 +1,7 @@
 #include "map_renderer.h"
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 #include <unordered_set>
 
@@ -135,15 +136,15 @@ namespace renderer {
         return route;
     }
 
-    svg::Text MapRenderer::RenderRouteUnderlayer(const Stop* stop, std::string route_name) {
+    svg::Text MapRenderer::RenderRouteUnderlayer(const Stop& stop, std::string route_name) {
         svg::Text underlayer;        
         return underlayer
-            .SetPosition(this->stop_sphere_coordinates_.at(*stop))
+            .SetPosition(this->stop_sphere_coordinates_.at(stop))
             .SetOffset(render_settings_.bus_label_offset_)
             .SetFontSize(render_settings_.bus_label_font_size_)
             .SetFontFamily("Verdana")
             .SetFontWeight("bold")
-            .SetData(route_name)
+            .SetData(std::move(route_name))
             .SetFillColor(render_settings_.underlayer_color_)
             .SetStrokeColor(render_settings_.underlayer_color_)
             .SetStrokeWidth(render_settings_.underlayer_width_)
@@ -151,27 +152,27 @@ namespace renderer {
             .SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
     }
 
-    svg::Text MapRenderer::RenderRouteName(const Stop* stop, std::string name) {
+    svg::Text MapRenderer::RenderRouteName(const Stop& stop, std::string name) {
         svg::Text route_name;
         return route_name
-            .SetPosition(this->stop_sphere_coordinates_.at(*stop))
+            .SetPosition(this->stop_sphere_coordinates_.at(stop))
             .SetOffset(render_settings_.bus_label_offset_)
             .SetFontSize(render_settings_.bus_label_font_size_)
             .SetFontFamily("Verdana")
             .SetFontWeight("bold")
-            .SetData(name)
+            .SetData(std::move(name))
             .SetFillColor(render_settings_.color_palette_[counter_++ % palette_size]);
 
     }
 
-    svg::Text MapRenderer::RenderStopUnderlayer(const Stop* stop) {
+    svg::Text MapRenderer::RenderStopUnderlayer(const Stop& stop) {
         svg::Text underlayer;
         return underlayer
-            .SetPosition(stop_sphere_coordinates_.at(*stop))
+            .SetPosition(stop_sphere_coordinates_.at(stop))
             .SetOffset(render_settings_.stop_label_offset_)
             .SetFontSize(render_settings_.stop_label_font_size_)
             .SetFontFamily("Verdana")           
-            .SetData(stop->name)
+            .SetData(stop.name)
             .SetFillColor(render_settings_.underlayer_color_)
             .SetStrokeColor(render_settings_.underlayer_color_)
             .SetStrokeWidth(render_settings_.underlayer_width_)
@@ -179,14 +180,14 @@ namespace renderer {
             .SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
     }
 
-    svg::Text MapRenderer::RenderStopName(const Stop* stop) {
+    svg::Text MapRenderer::RenderStopName(const Stop& stop) {
         svg::Text route_name;
         return route_name
-            .SetPosition(stop_sphere_coordinates_.at(*stop))
+            .SetPosition(stop_sphere_coordinates_.at(stop))
             .SetOffset(render_settings_.stop_label_offset_)
             .SetFontSize(render_settings_.stop_label_font_size_)
             .SetFontFamily("Verdana")
-            .SetData(stop->name)
+            .SetData(stop.name)
             .SetFillColor("black");
     }
 
@@ -194,10 +195,10 @@ namespace renderer {
         return &stop_sphere_coordinates_;
     }
 
-    svg::Circle MapRenderer::RenderStopCircle(const Stop* stop) {
+    svg::Circle MapRenderer::RenderStopCircle(const Stop& stop) {
         svg::Circle dot;
         return dot
-            .SetCenter(stop_sphere_coordinates_.at(*stop))
+            .SetCenter(stop_sphere_coordinates_.at(stop))
             .SetRadius(render_settings_.stop_radius_)
             .SetFillColor("white");
     }

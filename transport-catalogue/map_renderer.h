@@ -84,15 +84,15 @@ namespace renderer {
         // сборка маршрута
         svg::Polyline RenderPolyline(const Bus& bus);
 
-        svg::Text RenderRouteUnderlayer(const Stop* stop, std::string name);
+        svg::Text RenderRouteUnderlayer(const Stop& stop, std::string name);
 
-        svg::Text RenderRouteName(const Stop* stop, std::string name);
+        svg::Text RenderRouteName(const Stop& stop, std::string name);
 
-        svg::Text RenderStopUnderlayer(const Stop* stop);
+        svg::Text RenderStopUnderlayer(const Stop& stop);
 
-        svg::Text RenderStopName(const Stop* stop);
+        svg::Text RenderStopName(const Stop& stop);
 
-        svg::Circle RenderStopCircle(const Stop* stop);
+        svg::Circle RenderStopCircle(const Stop& stop);
 
         const std::unordered_map<Stop, svg::Point, detail::StopsHasher>* GetStops();
 
