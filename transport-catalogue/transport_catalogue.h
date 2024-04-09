@@ -9,32 +9,31 @@
 #include "domain.h"
 
 namespace transport_catalogue {
-using namespace information_base;
 
 class TransportCatalogue {
 public:
 	void AddDistanceBetweenStops(const std::string_view stop1, const std::string_view stop2, size_t dist);
 
-	size_t GetDistanceBetweenStops(const Stop* stop1, const Stop* stop2) const;
+	size_t GetDistanceBetweenStops(const information_base::Stop* stop1, const information_base::Stop* stop2) const;
 
-	void AddStop(Stop new_stop);
+	void AddStop(information_base::Stop new_stop);
 
-	const Stop* FindStop(const std::string_view name) const;
+	const information_base::Stop* FindStop(const std::string_view name) const;
 
-	void AddBus(Bus new_bus);
+	void AddBus(information_base::Bus new_bus);
 
-	const Bus* FindBus(const std::string_view name) const;
+	const information_base::Bus* FindBus(const std::string_view name) const;
 
-	std::optional<BusInfo> GetBusInfo(std::string_view name) const;
+	std::optional<information_base::BusInfo> GetBusInfo(std::string_view name) const;
 
 	std::set<std::string_view> GetStopInfo(std::string_view name) const;
 
 private:
-	Stops stops_;
-	StopsForBus stopname_to_bus_;
-	Buses buses_;
-	BusesForStop busname_to_stop_;
-	DistanceBetweenStops distance_between_stops_;
+	information_base::Stops stops_;
+	information_base::StopsForBus stopname_to_bus_;
+	information_base::Buses buses_;
+	information_base::BusesForStop busname_to_stop_;
+	information_base::DistanceBetweenStops distance_between_stops_;
 };
 
 } //namespace transport_catalogue

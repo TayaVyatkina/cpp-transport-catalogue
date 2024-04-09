@@ -10,7 +10,6 @@
 #include "transport_catalogue.h"
 
 namespace json_reader{
-using namespace transport_catalogue;
 
 class JsonReader {
 public:
@@ -21,9 +20,9 @@ public:
 
     renderer::RenderSettings LoadMapSettings()const;
 
-    void ConstructBase(TransportCatalogue& catalogue) const;
+    void ConstructBase(transport_catalogue::TransportCatalogue& catalogue) const;
 
-    void AskBase(TransportCatalogue& catalogue, std::ostream& output) const;
+    void AskBase(transport_catalogue::TransportCatalogue& catalogue, std::ostream& output) const;
 
 private:
     json::Document requests_;

@@ -6,7 +6,7 @@
 using namespace geo;
 
 namespace transport_catalogue {
-
+	using namespace information_base;
 void TransportCatalogue::AddDistanceBetweenStops(const std::string_view stop1, const std::string_view stop2, size_t dist) {
 	distance_between_stops_.insert({ std::pair{ FindStop(stop1), FindStop(stop2) }, dist });
 }

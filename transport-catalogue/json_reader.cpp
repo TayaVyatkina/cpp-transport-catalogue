@@ -7,6 +7,7 @@ namespace json_reader {
 using namespace std::literals;
 using namespace transport_catalogue;
 using namespace json;
+using namespace information_base;
 
 svg::Color ReadColor(const json::Node& json) {
     if (json.IsArray()) {
@@ -108,9 +109,9 @@ for (const auto& request : stat_request.AsArray()) {
     // запрос информации об автобусе
     if (object.at("type").AsString() == "Bus" && catalogue.FindBus(object.at("name").AsString())) {
         std::string_view bus_name = object.at("name").AsString();
-        std::optional<BusInfo> bus_info = catalogue.GetBusInfo(bus_name).has_value() ?
+        std::optional<information_base::BusInfo> bus_info = catalogue.GetBusInfo(bus_name).has_value() ?
             catalogue.GetBusInfo(bus_name).value()
-            : BusInfo{};
+            : information_base::BusInfo{};
         answers.emplace_back(Dict{
                 {"curvature", bus_info.value().curvature},
                 {"request_id", object.at("id").AsInt()},
@@ -136,7 +137,7 @@ for (const auto& request : stat_request.AsArray()) {
     // запрос на построение карты
     else if (object.at("type").AsString() == "Map") {
         const auto& base_request = requests_.GetRoot().AsMap().at("base_requests");
-        std::vector<std::pair<Bus, bool>>  buses;
+        std::vector<std::pair<information_base::Bus, bool>>  buses;
         for (auto& request : base_request.AsArray()) {
             auto& object = request.AsMap();
             if (object.at("type").AsString() == "Bus") {

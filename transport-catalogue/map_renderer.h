@@ -69,37 +69,35 @@ namespace renderer {
         std::vector<svg::Color> color_palette_;
     };
 
-    using namespace information_base;
-
     class MapRenderer {
     public:
         MapRenderer() = default;
 
-        MapRenderer(RenderSettings render_settings, const std::vector<std::pair<Bus, bool>>&  buses);
+        MapRenderer(RenderSettings render_settings, const std::vector<std::pair<information_base::Bus, bool>>&  buses);
 
         void SetCounter(size_t n);
 
         size_t GetCounter();
 
         // сборка маршрута
-        svg::Polyline RenderPolyline(const Bus& bus);
+        svg::Polyline RenderPolyline(const information_base::Bus& bus);
 
-        svg::Text RenderRouteUnderlayer(const Stop& stop, std::string name);
+        svg::Text RenderRouteUnderlayer(const information_base::Stop& stop, std::string name);
 
-        svg::Text RenderRouteName(const Stop& stop, std::string name);
+        svg::Text RenderRouteName(const information_base::Stop& stop, std::string name);
 
-        svg::Text RenderStopUnderlayer(const Stop& stop);
+        svg::Text RenderStopUnderlayer(const information_base::Stop& stop);
 
-        svg::Text RenderStopName(const Stop& stop);
+        svg::Text RenderStopName(const information_base::Stop& stop);
 
-        svg::Circle RenderStopCircle(const Stop& stop);
+        svg::Circle RenderStopCircle(const information_base::Stop& stop);
 
-        const std::unordered_map<Stop, svg::Point, detail::StopsHasher>* GetStops();
+        const std::unordered_map<information_base::Stop, svg::Point, information_base::detail::StopsHasher>* GetStops();
 
     private:
         RenderSettings render_settings_;
 
-        std::unordered_map<Stop, svg::Point, detail::StopsHasher> stop_sphere_coordinates_;
+        std::unordered_map<information_base::Stop, svg::Point, information_base::detail::StopsHasher> stop_sphere_coordinates_;
 
         size_t counter_ = 0;
     };
