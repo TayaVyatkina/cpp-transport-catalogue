@@ -3,7 +3,7 @@
 #include <tuple>
 
 #include "transport_catalogue.h"
-using namespace geo;
+
 
 namespace transport_catalogue {
 	using namespace information_base;
@@ -60,7 +60,7 @@ std::optional<BusInfo> TransportCatalogue::GetBusInfo(std::string_view name) con
 		for (size_t i = 0; i + 1 != bus.stops.size(); ++i) {
 			const Stop* current_stop = bus.stops[i];
 			const Stop* next_stop = bus.stops[i + 1];
-			route_length += ComputeGeographicalDistance(current_stop->coordinates, next_stop->coordinates);
+			route_length += geo::ComputeGeographicalDistance(current_stop->coordinates, next_stop->coordinates);
 			actual_length += GetDistanceBetweenStops(current_stop, next_stop);
 		}
 		return BusInfo{ stops_on_route, unique_stops, actual_length, (actual_length * 1.) / route_length };

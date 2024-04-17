@@ -1,4 +1,5 @@
 #include "json_reader.h"
+#include "json_builder.h"
 #include "request_handler.h"
 #include "svg.h"
 #include "sstream"
@@ -112,26 +113,36 @@ for (const auto& request : stat_request.AsArray()) {
         std::optional<information_base::BusInfo> bus_info = catalogue.GetBusInfo(bus_name).has_value() ?
             catalogue.GetBusInfo(bus_name).value()
             : information_base::BusInfo{};
-        answers.emplace_back(Dict{
-                {"curvature", bus_info.value().curvature},
-                {"request_id", object.at("id").AsInt()},
-                {"route_length", bus_info.value().route_length},
-                {"stop_count", static_cast<int>(bus_info.value().stops_on_route)},
-                    {"unique_stop_count", static_cast<int>(bus_info.value().unique_stops)}
-        });
+        answers.emplace_back(
+            json::Builder{}
+            .StartDict()
+            .Key("curvature").Value(bus_info.value().curvature)
+            .Key("request_id").Value(object.at("id").AsInt())
+            .Key("route_length").Value(bus_info.value().route_length)
+            .Key("stop_count").Value(static_cast<int>(bus_info.value().stops_on_route))
+            .Key("unique_stop_count").Value(static_cast<int>(bus_info.value().unique_stops))
+            .EndDict()
+            .Build()
+        );
     }
     // запрос информации об остановке
     else if (object.at("type").AsString() == "Stop" && catalogue.FindStop(object.at("name").AsString())) {
         std::string_view stop_name = object.at("name").AsString();
         std::set<std::string_view> stop_info = catalogue.GetStopInfo(stop_name);
-        Array stops;
-        for (std::string_view stop : stop_info) {
-            stops.emplace_back(std::move(std::string{ stop.data(), stop.size() }));
-        }
-        answers.push_back(Dict{
-            {"buses", stops},
-            {"request_id", object.at("id").AsInt()}
-            });
+        Builder builder;
+            builder
+                .StartDict()
+                .Key("buses").StartArray();
+
+            for (std::string_view stop : stop_info) {
+                builder.Value(std::move(std::string{ stop.data(), stop.size() }));
+            }
+            builder
+                .EndArray()
+                .Key("request_id").Value(object.at("id").AsInt())
+                .EndDict();
+            
+        answers.emplace_back(std::move(builder.Build()));
 
     }
     // запрос на построение карты
@@ -152,17 +163,25 @@ for (const auto& request : stat_request.AsArray()) {
         std::ostringstream out;
         request_handler.RenderMap(out);
 
-        answers.push_back(Dict{
-            {"map", out.str()},
-            {"request_id", object.at("id").AsInt()}
-            });
+        answers.emplace_back(
+            json::Builder{}
+            .StartDict()
+            .Key("map").Value(out.str())
+            .Key("request_id").Value(object.at("id").AsInt())
+            .EndDict()
+            .Build()
+        );
     }
     // прочие запросы
     else {
-        answers.push_back(Dict{
-                {"request_id", object.at("id").AsInt()},
-                {"error_message"s, "not found"s}
-            });
+        answers.emplace_back(
+            json::Builder{}
+            .StartDict()
+            .Key("request_id").Value(object.at("id").AsInt())
+            .Key("error_message"s).Value("not found"s)
+            .EndDict()
+            .Build()
+        );
     }
 }
 

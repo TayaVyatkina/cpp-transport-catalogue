@@ -23,7 +23,7 @@ namespace json {
     public:
         using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
         const Value& GetValue() const { return value_; }
-
+        Value& GetValue() { return value_; }
         Node() :value_(nullptr) {}
 
         template<typename T>
@@ -52,6 +52,7 @@ namespace json {
         const std::string& AsString() const;
         const Array& AsArray() const;
         const Dict& AsMap() const;
+
 
     private:
         Value value_;
