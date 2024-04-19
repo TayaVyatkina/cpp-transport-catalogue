@@ -1,108 +1,150 @@
 #include "json_builder.h"
 #include <exception>
-#include <variant>
-#include <utility>
 
-using namespace std::literals;
+namespace json {  
 
-namespace json {
+    BaseContext::BaseContext(Builder& builder)
+        : builder_(builder)
+    {}
+
+    KeyContext BaseContext::Key(std::string key) {
+        return builder_.Key(std::move(key));
+    }
+
+    DictContext BaseContext::StartDict() {
+        return DictContext(builder_.StartDict());
+    }
+    
+    ArrayContext BaseContext::StartArray() {
+        return ArrayContext(builder_.StartArray());
+    }
+
+    Builder& BaseContext::Value(Node::Value value) {
+        return builder_.Value(std::move(value));
+    }
+
+    Builder& BaseContext::EndDict() {
+        return builder_.EndDict();        
+    }
+
+    Builder& BaseContext::EndArray() {
+        return builder_.EndArray();
+    }
+
+
+
+    KeyContext::KeyContext(Builder& builder) 
+        : BaseContext(builder) 
+    {}
+
+    DictContext KeyContext::Value(Node::Value value) { 
+        return BaseContext::Value(std::move(value)); 
+    }
+
+
+    DictContext::DictContext(Builder& builder) 
+        : BaseContext(builder) 
+    {}
+
+
+    ArrayContext::ArrayContext(Builder& builder) 
+        : BaseContext(builder) 
+    {}
+
+    ArrayContext ArrayContext::Value(Node::Value value) { 
+        return BaseContext::Value(move(value)); 
+    }
+
 
     Builder::Builder()
         : root_()
         , nodes_stack_{ &root_ }
     {}
 
+    class LogicError : public std::logic_error {
+    public:
+        using logic_error::logic_error;
+    };
+
+    using namespace std::literals;
+
     Node Builder::Build() {
+        // запрет выпуска незаконченного документа
         if (!nodes_stack_.empty()) {
-            throw std::logic_error("Attempt to build JSON which isn't finalized"s);
+            throw LogicError("still unfinished Array/Dict"s);
         }
         return std::move(root_);
     }
 
-    Builder::DictValueContext Builder::Key(std::string key) {
-        Node::Value& host_value = GetCurrentValue();
+    Builder& Builder::Value(Node::Value value) {
+        AddObject(std::move(value), true);
+        return *this;
+    }
 
+    KeyContext Builder::Key(std::string key) {
+        Node::Value& host_value = GetCurrentValue();
+        // запрет записи ключа вне словаря
         if (!std::holds_alternative<Dict>(host_value)) {
-            throw std::logic_error("Key() outside a dict"s);
+            throw LogicError("Dict recording is not started"s);
         }
 
         nodes_stack_.push_back(
             &std::get<Dict>(host_value)[std::move(key)]
         );
-        return BaseContext{ *this };
-    }
-
-    Builder::BaseContext Builder::Value(Node::Value value) {
-        AddObject(std::move(value), /* one_shot */ true);
         return *this;
     }
 
-    Builder::DictItemContext Builder::StartDict() {
-        AddObject(Dict{}, /* one_shot */ false);
-        return BaseContext{ *this };
+    DictContext Builder::StartDict() {
+        AddObject(Dict{}, false);
+        return *this;
     }
 
-    Builder::ArrayItemContext Builder::StartArray() {
-        AddObject(Array{}, /* one_shot */ false);
-        return BaseContext{ *this };
+    ArrayContext Builder::StartArray() {
+        AddObject(Array{}, false);
+        return *this;
     }
 
-    Builder::BaseContext Builder::EndDict() {
+    Builder& Builder::EndDict() {
+        // запрет завершения несозданного словаря
         if (!std::holds_alternative<Dict>(GetCurrentValue())) {
-            throw std::logic_error("EndDict() outside a dict"s);
+            throw LogicError("Dict beginning is missing"s);
         }
         nodes_stack_.pop_back();
         return *this;
     }
 
-    Builder::BaseContext Builder::EndArray() {
+    Builder& Builder::EndArray() {
+        // запрет завершения несозданного массива
         if (!std::holds_alternative<Array>(GetCurrentValue())) {
-            throw std::logic_error("EndDict() outside an array"s);
+            throw LogicError("Array beginning is missing"s);
         }
         nodes_stack_.pop_back();
         return *this;
     }
-
-    // Current value can be:
-    // * Dict, when .Key().Value() or EndDict() is expected
-    // * Array, when .Value() or EndArray() is expected
-    // * nullptr (default), when first call or dict Value() is expected
 
     Node::Value& Builder::GetCurrentValue() {
         if (nodes_stack_.empty()) {
-            throw std::logic_error("Attempt to change finalized JSON"s);
+            // ни одна запись не открыта
+            throw std::logic_error("nodes stack is empty"s);
         }
         return nodes_stack_.back()->GetValue();
     }
 
-    // Tell about this trick
-    const Node::Value& Builder::GetCurrentValue() const {
-        return const_cast<Builder*>(this)->GetCurrentValue();
-    }
-
-    void Builder::AssertNewObjectContext() const {
-        if (!std::holds_alternative<std::nullptr_t>(GetCurrentValue())) {
-            throw std::logic_error("New object in wrong context"s);
+    void Builder::AddObject(Node::Value node, bool one_shot) {
+        nodes_stack_.pop_back();
+        if (nodes_stack_.empty()) {
+            root_ = node;
         }
-    }
-
-    void Builder::AddObject(Node::Value value, bool one_shot) {
-        Node::Value& host_value = GetCurrentValue();
-        if (std::holds_alternative<Array>(host_value)) {
-            // Tell about emplace_back
-            Node& node
-                = std::get<Array>(host_value).emplace_back(std::move(value));
-            if (!one_shot) {
-                nodes_stack_.push_back(&node);
-            }
+        else if (nodes_stack_.back()->IsArray()) {
+            (nodes_stack_.back()->AsArray()).emplace_back(node);
         }
         else {
-            AssertNewObjectContext();
-            host_value = std::move(value);
-            if (one_shot) {
-                nodes_stack_.pop_back();
-            }
+            Node& key = *nodes_stack_.back();
+            nodes_stack_.pop_back();
+            (nodes_stack_.back()->AsMap()).in;
         }
+        //return *this;
+    }
     }
 
 }  // namespace json
