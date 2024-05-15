@@ -28,6 +28,12 @@ public:
 
 	std::set<std::string_view> GetStopInfo(std::string_view name) const;
 
+	std::vector<information_base::Stop> GetStops() const{
+		return { stops_.begin(), stops_.end()};
+	}
+	std::vector<information_base::Bus> GetBuses() const {
+		return { buses_.begin(), buses_.end() };
+	}
 private:
 	information_base::Stops stops_;
 	information_base::StopsForBus stopname_to_bus_;

@@ -69,7 +69,7 @@ namespace json {
     using namespace std::literals;
 
     Node Builder::Build() {
-        // запрет выпуска незаконченного документа
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (!nodes_stack_.empty()) {
             throw LogicError("still unfinished Array/Dict"s);
         }
@@ -83,7 +83,7 @@ namespace json {
 
     KeyContext Builder::Key(std::string key) {
         Node::Value& host_value = GetCurrentValue();
-        // запрет записи ключа вне словаря
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (!std::holds_alternative<Dict>(host_value)) {
             throw LogicError("Dict recording is not started"s);
         }
@@ -105,7 +105,7 @@ namespace json {
     }
 
     Builder& Builder::EndDict() {
-        // запрет завершения несозданного словаря
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (!std::holds_alternative<Dict>(GetCurrentValue())) {
             throw LogicError("Dict beginning is missing"s);
         }
@@ -114,7 +114,7 @@ namespace json {
     }
 
     Builder& Builder::EndArray() {
-        // запрет завершения несозданного массива
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (!std::holds_alternative<Array>(GetCurrentValue())) {
             throw LogicError("Array beginning is missing"s);
         }
@@ -124,27 +124,29 @@ namespace json {
 
     Node::Value& Builder::GetCurrentValue() {
         if (nodes_stack_.empty()) {
-            // ни одна запись не открыта
+            // пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             throw std::logic_error("nodes stack is empty"s);
         }
         return nodes_stack_.back()->GetValue();
     }
 
-    void Builder::AddObject(Node::Value node, bool one_shot) {
-        nodes_stack_.pop_back();
-        if (nodes_stack_.empty()) {
-            root_ = node;
-        }
-        else if (nodes_stack_.back()->IsArray()) {
-            (nodes_stack_.back()->AsArray()).emplace_back(node);
+    void Builder::AddObject(Node::Value value, bool one_shot) {
+        Node::Value& host_value = GetCurrentValue();
+        if (std::holds_alternative<Array>(host_value)) {
+            Node& node = std::get<Array>(host_value).emplace_back(std::move(value));
+            if (!one_shot) {
+                nodes_stack_.push_back(&node);
+            }
         }
         else {
-            Node& key = *nodes_stack_.back();
-            nodes_stack_.pop_back();
-            (nodes_stack_.back()->AsMap()).in;
+            if (!std::holds_alternative<std::nullptr_t>(GetCurrentValue())) {
+                throw std::logic_error("wrong object type"s);
+            }
+            host_value = std::move(value);
+            if (one_shot) {
+                nodes_stack_.pop_back();
+            }
         }
-        //return *this;
-    }
     }
 
 }  // namespace json

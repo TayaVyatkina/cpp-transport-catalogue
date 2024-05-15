@@ -19,7 +19,7 @@ namespace information_base {
 	struct Bus {
 		std::string name;
 		std::vector<const Stop*> stops{};
-
+		std::vector <const Stop*> last_stops{};
 		bool operator==(const Bus& other) const;
 		bool operator<(const Bus& other) const;
 	};
@@ -30,7 +30,7 @@ namespace information_base {
 		double route_length = 0.;
 		double curvature = .0;
 	};
-
+	
 	namespace detail {
 
 	class DistanceHasher {
@@ -63,4 +63,29 @@ namespace information_base {
 	using BusesForStop = std::unordered_map<std::string_view, Bus*>;
 	using DistanceBetweenStops = std::unordered_map<std::pair<const Stop*, const Stop*>, size_t, detail::DistanceHasher>;
 
+	struct Settings {
+		int bus_wait_time;
+		double bus_velocity;
+	};
+
+	struct RouteInfo {
+		struct Wait {
+			double minutes = 0;
+			std::string stop_name;
+		};
+
+		struct Bus {
+			std::string number;
+			int span_count = 0;
+			double minutes = 0.0;
+		};
+
+		Wait wait;
+		Bus bus;
+	};
+
+	struct ReportRouter {
+		std::vector<RouteInfo>  information;
+		double             total_minutes = 0;
+	};
 }// namespace information_base 

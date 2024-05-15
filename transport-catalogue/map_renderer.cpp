@@ -94,9 +94,11 @@ namespace renderer {
 
     using namespace information_base;
 
-    MapRenderer::MapRenderer(RenderSettings render_settings, const std::vector<std::pair<Bus, bool>>& buses)
+    MapRenderer::MapRenderer(renderer::RenderSettings render_settings) 
         : render_settings_(std::move(render_settings))
-    {
+    {}
+
+    void MapRenderer::AddRoutes(std::vector<std::pair<information_base::Bus, bool>>& buses) {
         palette_size = this->render_settings_.color_palette_.size();
         // Список всех остановок
         std::unordered_set<Stop, information_base::detail::StopsHasher> stops;

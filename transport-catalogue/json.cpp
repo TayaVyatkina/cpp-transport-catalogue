@@ -4,6 +4,7 @@ using namespace std;
 
 namespace json {
     namespace {
+        using namespace json;
         /*
             Удаляет пробелы в начале и конце строки
         */

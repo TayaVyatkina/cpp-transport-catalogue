@@ -2,6 +2,7 @@
 #include "domain.h"
 #include "map_renderer.h"
 #include "transport_catalogue.h"
+#include "transport_router.h"
 
 #include <set>
 
@@ -13,8 +14,17 @@ namespace request_handler {
 
 class RequestHandler {
 public:
-    // MapRenderer понадобится в следующей части итогового проекта
-    RequestHandler(transport_catalogue::TransportCatalogue& data_base, renderer::MapRenderer& renderer);
+    RequestHandler() = default;
+    
+    RequestHandler(transport_catalogue::TransportCatalogue* data_base, renderer::MapRenderer* renderer, graph::TransportRouter* router);
+
+    RequestHandler(transport_catalogue::TransportCatalogue* data_base);
+
+    void AddDataBase(transport_catalogue::TransportCatalogue* data_base);
+
+    void AddMapRenderer(renderer::MapRenderer* renderer);
+
+    void AddTransportRouter(graph::TransportRouter* router);
 
     // Возвращает информацию о маршруте (запрос Bus)
     std::optional<information_base::BusInfo> GetBusStat(const std::string_view& bus_name) const;
@@ -28,10 +38,13 @@ public:
     // Этот метод будет нужен в следующей части итогового проекта
     void RenderMap(std::ostream& out) const;
 
+    std::optional<information_base::ReportRouter> GetReportRouter(const std::string_view& from, const std::string_view& to) const;
+
 private:
     // RequestHandler использует агрегацию объектов "Транспортный Справочник" и "Визуализатор Карты"
-    transport_catalogue::TransportCatalogue& data_base_;
-    renderer::MapRenderer& map_renderer_;
-    std::set<std::pair<information_base::Bus, bool>, information_base::detail::PairsHasher> buses_;
+    transport_catalogue::TransportCatalogue* data_base_ = nullptr;
+    renderer::MapRenderer* map_renderer_ = nullptr;
+    std::set<std::pair<information_base::Bus, bool>, information_base::detail::PairsHasher> buses_{};
+    graph::TransportRouter* router_ = nullptr;
 };
 } //namespace request_handler

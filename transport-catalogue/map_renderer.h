@@ -73,7 +73,9 @@ namespace renderer {
     public:
         MapRenderer() = default;
 
-        MapRenderer(RenderSettings render_settings, const std::vector<std::pair<information_base::Bus, bool>>&  buses);
+        void AddRoutes(std::vector<std::pair<information_base::Bus, bool>>& buses);
+
+        MapRenderer(renderer::RenderSettings render_settings);
 
         void SetCounter(size_t n);
 

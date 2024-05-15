@@ -6,19 +6,20 @@
 #include <utility>
 
 #include "json.h"
-#include "map_renderer.h"
-#include "transport_catalogue.h"
 
+#include "transport_catalogue.h"
+#include "map_renderer.h"
 namespace json_reader{
 
 class JsonReader {
 public:
 
     explicit JsonReader(std::istream& input) 
-        : requests_(json::Load(input)) 
+        : requests_(json::Load(input))
     {};
 
-    renderer::RenderSettings LoadMapSettings()const;
+
+    renderer::RenderSettings LoadMapSettings() const;
 
     void ConstructBase(transport_catalogue::TransportCatalogue& catalogue) const;
 
@@ -26,6 +27,5 @@ public:
 
 private:
     json::Document requests_;
-
 };
 }//namespace json_reader

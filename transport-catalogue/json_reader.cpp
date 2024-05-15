@@ -1,8 +1,13 @@
+#include "graph.h"
 #include "json_reader.h"
 #include "json_builder.h"
-#include "request_handler.h"
+#include "router.h"
 #include "svg.h"
 #include "sstream"
+
+#include "map_renderer.h"
+#include "request_handler.h"
+#include "transport_router.h"
 
 namespace json_reader {
 using namespace std::literals;
@@ -83,8 +88,14 @@ for (auto& request : base_request.AsArray()) {
         for (const auto& stop : object.at("stops").AsArray()) {
             obj_stops.push_back(catalogue.FindStop(stop.AsString()));
         }
+        std::vector<const Stop*> last_stops;
         // внесение обратного пути для некольцевого маршрута
         if (object.at("is_roundtrip").AsBool() == false) {
+            last_stops.push_back(obj_stops[0]);
+            last_stops.push_back(obj_stops[obj_stops.size() - 1]);
+            if (last_stops.size() == 2 && last_stops[0] == last_stops[1]) {
+                last_stops.pop_back();
+            }
             // пропустить конечную 
             bool flag = false;
             for (auto rit = object.at("stops").AsArray().rbegin(); rit != object.at("stops").AsArray().rend(); ++rit) {
@@ -96,12 +107,24 @@ for (auto& request : base_request.AsArray()) {
                 }
             }
         }
-        catalogue.AddBus(Bus{ object.at("name").AsString(), std::move(obj_stops) });
+        else {
+            last_stops.push_back(obj_stops[0]);
+        }
+        catalogue.AddBus(Bus{ object.at("name").AsString(), std::move(obj_stops), std::move(last_stops) });
     }
 }
 }
 
 void JsonReader::AskBase(TransportCatalogue& catalogue, std::ostream& output) const {
+request_handler::RequestHandler request_handler(&catalogue);
+renderer::MapRenderer map_rend(LoadMapSettings());
+request_handler.AddMapRenderer(&map_rend);
+
+const auto& routing_settings = requests_.GetRoot().AsMap().at("routing_settings");
+const graph::Settings settings(routing_settings.AsMap().at("bus_wait_time").AsInt(), routing_settings.AsMap().at("bus_velocity").AsDouble());
+graph::TransportRouter transport_router(catalogue, settings);
+request_handler.AddTransportRouter(&transport_router);
+
 const auto& stat_request = requests_.GetRoot().AsMap().at("stat_requests");
 // формирование ответов на запросы к базе данных
 Array answers;
@@ -157,9 +180,8 @@ for (const auto& request : stat_request.AsArray()) {
             }
         }
 
-        renderer::MapRenderer map_rend(LoadMapSettings(), buses);// подгрузили из json настройки для карты + список остановок 
-        request_handler::RequestHandler request_handler(catalogue, map_rend); // агрегация бд и "чертёжника"
-        request_handler.AddRoutes(buses);//  подгрузили список маршрутов
+        map_rend.AddRoutes(buses);
+        request_handler.AddRoutes(buses);
         std::ostringstream out;
         request_handler.RenderMap(out);
 
@@ -172,6 +194,53 @@ for (const auto& request : stat_request.AsArray()) {
             .Build()
         );
     }
+    // запрос на поиск кратчайшего пути
+    else if (object.at("type").AsString() == "Route" 
+        && catalogue.FindStop(object.at("from").AsString()) 
+        && catalogue.FindStop(object.at("to").AsString())) {
+        Builder builder;
+        const auto& report = request_handler.GetReportRouter(object.at("from").AsString(), object.at("to").AsString());
+            if (report.has_value()) {
+                builder
+                    .StartDict()
+                    .Key("request_id").Value(object.at("id").AsInt())
+                    .Key("total_time"s).Value(report.value().total_minutes)
+                    .Key("items"s).StartArray();
+
+                for (const auto& info : report.value().information) {
+                    if (!info.wait.stop_name.empty()) {
+                        builder.StartDict()
+                            .Key("type"s).Value("Wait"s)
+                            .Key("time"s).Value(info.wait.minutes)
+                            .Key("stop_name"s).Value(info.wait.stop_name)
+                            .EndDict();
+                    }
+                    if (!info.bus.number.empty()) {
+                        builder.StartDict()
+                            .Key("type"s).Value("Bus"s)
+                            .Key("time"s).Value(info.bus.minutes)
+                            .Key("bus"s).Value(std::string(info.bus.number))
+                            .Key("span_count"s).Value(info.bus.span_count)
+                            .EndDict();
+                    }
+                }
+
+                builder
+                    .EndArray()
+                    .EndDict();
+                answers.emplace_back(std::move(builder.Build()));
+            }
+            else {
+                answers.emplace_back(
+                    json::Builder{}
+                    .StartDict()
+                    .Key("request_id").Value(object.at("id").AsInt())
+                    .Key("error_message"s).Value("not found"s)
+                    .EndDict()
+                    .Build()
+                );
+            }
+         }
     // прочие запросы
     else {
         answers.emplace_back(
